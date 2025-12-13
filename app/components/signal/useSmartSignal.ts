@@ -119,7 +119,8 @@ export function useSmartSignal({
   }, [symbol, candles]);
 
   // Convert AI response to SmartSignal format
-  const aiResponseToSignal = useCallback((ai: AIAnalysisResponse, currentPrice: number): SmartSignal | null => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const aiResponseToSignal = useCallback((ai: AIAnalysisResponse, _currentPrice: number): SmartSignal | null => {
     if (ai.signal === 'WAIT') {
       return null;
     }

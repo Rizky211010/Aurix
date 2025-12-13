@@ -88,7 +88,8 @@ export interface AIAnalysisResponse {
  */
 function buildAnalysisPrompt(data: AIAnalysisRequest): string {
   const lastCandles = data.candles.slice(-20);
-  const currentCandle = lastCandles[lastCandles.length - 1];
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _currentCandle = lastCandles[lastCandles.length - 1];
   
   // Format candle data
   const candleText = lastCandles.map((c, i) => 
@@ -318,7 +319,8 @@ Rate each zone 1-10 and explain. Return JSON: { "ratings": [{"index": 0, "score"
  */
 export async function validateStructureWithAI(
   structure: MarketStructure,
-  candles: CandleData[]
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _candles: CandleData[]
 ): Promise<{ valid: boolean; confidence: number; analysis: string }> {
   const prompt = `Validate this market structure:
 Trend: ${structure.trend}

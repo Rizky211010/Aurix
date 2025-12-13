@@ -180,6 +180,7 @@ export function useBotDashboard(options: UseBotDashboardOptions = {}) {
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Stop bot
@@ -201,6 +202,7 @@ export function useBotDashboard(options: UseBotDashboardOptions = {}) {
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fetch status

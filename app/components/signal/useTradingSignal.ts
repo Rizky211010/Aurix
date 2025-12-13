@@ -131,20 +131,21 @@ export function useTradingSignal({
       setSignal(data);
       setLastFetch(Date.now());
       
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') {
         // Request was cancelled, ignore
         return;
       }
       
       console.error('[useTradingSignal] Error:', err);
-      setError(err.message || 'Failed to fetch signal');
+      const errMessage = err instanceof Error ? err.message : 'Failed to fetch signal';
+      setError(errMessage);
       setSignal({
         ...DEFAULT_SIGNAL,
         market: symbol,
         timeframe,
         bot_mode: botMode === 'live' ? 'LIVE' : 'DRY_RUN',
-        reason: `Error: ${err.message}`
+        reason: `Error: ${errMessage}`
       });
     } finally {
       setIsLoading(false);
@@ -154,6 +155,7 @@ export function useTradingSignal({
   // Fetch on mount and when dependencies change
   useEffect(() => {
     fetchSignal();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol, timeframe, botMode, aiEnabled]); // Don't include candles to avoid too many fetches
   
   // Auto-refresh interval

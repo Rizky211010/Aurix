@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { SignalData, SignalCardProps } from './types';
+import { SignalCardProps } from './types';
 import WhyThisSignalDrawer from './WhyThisSignalDrawer';
 
 // AI Response type

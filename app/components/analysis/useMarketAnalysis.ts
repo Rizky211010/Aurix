@@ -59,11 +59,11 @@ export function useMarketAnalysis({
 
       const result: MarketAnalysisData = await response.json();
       setData(result);
-    } catch (err: any) {
-      if (err.name === 'AbortError') return;
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return;
       
       console.error('[useMarketAnalysis] Error:', err);
-      setError(err.message || 'Failed to fetch market analysis');
+      setError(err instanceof Error ? err.message : 'Failed to fetch market analysis');
     } finally {
       setIsLoading(false);
     }

@@ -201,13 +201,13 @@ export function useWebSocket({
               high: Math.max(currentCandle.high, tickPrice),
               low: Math.min(currentCandle.low, tickPrice),
               close: tickPrice, // Always update close to latest tick
-              volume: currentCandle.volume + tickVolume,
+              volume: (currentCandle.volume || 0) + tickVolume,
             };
             
             lastCandleRef.current = updatedCandle;
             onMessage(updatedCandle);
           }
-        } catch (err) {
+        } catch {
           // Ignore parse errors on tick data
         }
       };

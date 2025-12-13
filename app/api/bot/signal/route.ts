@@ -250,7 +250,7 @@ function generateSignal(
   let takeProfit1 = 0;
   let takeProfit2 = 0;
   let riskReward = 0;
-  let confidence = trend.strength;
+  const confidence = trend.strength;
   let reason = '';
   
   // BULLISH TREND = BUY
@@ -344,7 +344,7 @@ export async function POST(request: NextRequest) {
     } = body;
     
     // Generate base signal
-    let signal = generateSignal(
+    const signal = generateSignal(
       candles,
       symbol.toUpperCase(),
       timeframe,

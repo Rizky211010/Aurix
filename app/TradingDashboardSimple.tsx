@@ -17,12 +17,18 @@ import { useZoomPan } from './components/chart/hooks/useZoomPan';
  * - AI signal based on visible chart range
  * - Automatic trading level overlay
  */
+type ChartApi = ReturnType<typeof import('lightweight-charts').createChart>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SeriesApi = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PriceLineApi = any;
+
 export default function TradingDashboard() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<ReturnType<typeof import('lightweight-charts').createChart> | null>(null);
-  const candlestickSeriesRef = useRef<any>(null);
-  const volumeSeriesRef = useRef<any>(null);
-  const tradingLinesRef = useRef<any[]>([]);
+  const chartRef = useRef<ChartApi | null>(null);
+  const candlestickSeriesRef = useRef<SeriesApi>(null);
+  const volumeSeriesRef = useRef<SeriesApi>(null);
+  const tradingLinesRef = useRef<PriceLineApi[]>([]);
   
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [timeframe, setTimeframe] = useState<Timeframe>('1m'); // Default 1m for realtime feel
@@ -121,7 +127,7 @@ export default function TradingDashboard() {
 
   // Zoom & Pan hook - TradingView-style interactions
   const { resetZoom, fitAll, visibleCandles: zoomVisibleCount, isZoomedOut } = useZoomPan({
-    chartRef: chartRef as any,
+    chartRef: chartRef as React.MutableRefObject<ChartApi>,
     containerRef,
     enabled: isChartReady,
     minZoom: 10,
@@ -144,7 +150,7 @@ export default function TradingDashboard() {
         const visible = candles.slice(fromIdx, toIdx + 1);
         setVisibleCandles(visible);
       }
-    } catch (e) {
+    } catch {
       // Fallback: use all candles
       setVisibleCandles(candles);
     }
@@ -185,6 +191,7 @@ export default function TradingDashboard() {
     if (tickCount > 0 && tickCount % 10 === 0 && currentPrice) {
       addLog('TICK', `Price: ${formatPrice(currentPrice)} (${tickCount} ticks)`);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tickCount, currentPrice, addLog]);
 
   /**
@@ -233,6 +240,7 @@ export default function TradingDashboard() {
         addLog('DRY-RUN', `Would execute ${signal.signal} @ ${formatPrice(signal.entry)}`);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botRunning, signal, currentPrice, botMode, symbol, timeframe, addLog]);
 
   // Initialize on client side only (fix hydration)
@@ -358,8 +366,8 @@ export default function TradingDashboard() {
     try {
       candlestickSeriesRef.current.setData(chartData);
       volumeSeriesRef.current?.setData(volumeData);
-    } catch (e) {
-      console.error('Chart setData error:', e);
+    } catch (err) {
+      console.error('Chart setData error:', err);
     }
     
     // Only fit content on initial load, not on every update
@@ -368,6 +376,7 @@ export default function TradingDashboard() {
     } else {
       chartRef.current?.timeScale().fitContent();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChartReady, candles.length > 0 ? candles[0]?.time : 0]); // Only run on initial load
 
   // REALTIME CHART UPDATE - Update last candle every tick
@@ -396,7 +405,7 @@ export default function TradingDashboard() {
     // Update candlestick
     try {
       candlestickSeriesRef.current.update(updatedCandle);
-    } catch (e) {
+    } catch {
       // Ignore update errors (e.g., time order issues)
     }
 
@@ -410,10 +419,11 @@ export default function TradingDashboard() {
             ? 'rgba(38, 166, 91, 0.3)' 
             : 'rgba(232, 92, 92, 0.3)',
         });
-      } catch (e) {
+      } catch {
         // Ignore update errors
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChartReady, currentPrice, tickCount]); // Update on every tick
 
   // Draw trading levels when signal changes
@@ -425,7 +435,7 @@ export default function TradingDashboard() {
     tradingLinesRef.current.forEach(line => {
       try {
         candlestickSeriesRef.current?.removePriceLine(line);
-      } catch (e) {}
+      } catch { /* ignore */ }
     });
     tradingLinesRef.current = [];
     
@@ -466,7 +476,7 @@ export default function TradingDashboard() {
       // Call backend stop
       try {
         await fetch('/api/bot/stop', { method: 'POST' });
-      } catch (e) {}
+      } catch { /* ignore */ }
     } else {
       // Start bot
       setBotRunning(true);
@@ -483,7 +493,7 @@ export default function TradingDashboard() {
             dry_run: botMode === 'dry-run',
           })
         });
-      } catch (e) {
+      } catch {
         addLog('ERROR', 'Failed to connect to bot backend');
       }
       
@@ -512,6 +522,7 @@ export default function TradingDashboard() {
     if (signal.signal !== 'WAIT') {
       addLog('SIGNAL', `${signal.signal} @ ${signal.entry} | SL: ${signal.stop_loss} | TP1: ${signal.take_profit_1}`);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signal?.signal, signal?.entry, addLog]);
 
   return (

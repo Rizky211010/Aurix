@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   MarketStructure,
   MarketStructureConfig,
@@ -52,10 +52,11 @@ export function useMarketStructure(
     useBackend = true,
   } = options;
 
-  const config: MarketStructureConfig = {
+  // Memoize config to prevent useCallback dependency changes
+  const config: MarketStructureConfig = useMemo(() => ({
     ...DEFAULT_STRUCTURE_CONFIG,
     ...userConfig,
-  };
+  }), [userConfig]);
 
   const [structure, setStructure] = useState<MarketStructure | null>(null);
   const [visualization, setVisualization] = useState<MarketStructureVisualization | null>(null);

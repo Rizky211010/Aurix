@@ -99,7 +99,7 @@ export function useZoomPan({
             Math.ceil(logicalRange.to as number)
           );
         }
-      } catch (e) {
+      } catch {
         // Ignore errors
       }
     }

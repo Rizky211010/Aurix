@@ -152,6 +152,7 @@ export function useSupplyDemand(
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candles.length, currentPrice, symbol, useBackend, analyzeLocal, config]);
 
   // Initial analysis and on candle update
@@ -160,6 +161,7 @@ export function useSupplyDemand(
     if (candles.length > 0 && candles.length !== lastCandleCountRef.current) {
       analyze();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candles.length]); // Only depend on candles.length, not analyze
 
   // Auto refresh
@@ -171,6 +173,7 @@ export function useSupplyDemand(
     }, refreshInterval);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh, refreshInterval]); // Remove analyze from deps
 
   // Derived data

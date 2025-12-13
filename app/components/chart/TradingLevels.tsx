@@ -8,6 +8,7 @@ export interface TradingLevel {
   label: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface TradingLevelsOverlayProps {
   levels: TradingLevel[];
   currentPrice: number;
@@ -16,6 +17,7 @@ interface TradingLevelsOverlayProps {
 }
 
 // Color scheme for trading levels
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const LEVEL_COLORS: Record<string, { bg: string; border: string; text: string }> = {
   entry: { bg: 'bg-blue-500/20', border: 'border-blue-500', text: 'text-blue-400' },
   sl: { bg: 'bg-red-500/20', border: 'border-red-500', text: 'text-red-400' },
