@@ -9,10 +9,12 @@ interface MobileSettingsProps {
 }
 
 export default function MobileSettings({
-  onThemeChange,
+  onThemeChange: _onThemeChange,
   onNotificationsChange,
   onSoundChange
 }: MobileSettingsProps) {
+  // Theme change reserved for future use
+  void _onThemeChange;
   const [notifications, setNotifications] = useState(true);
   const [sound, setSound] = useState(true);
   const [showChartLines, setShowChartLines] = useState(true);

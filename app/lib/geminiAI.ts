@@ -84,15 +84,24 @@ export interface AIAnalysisResponse {
 }
 
 /**
- * Build the prompt for Gemini AI
+ * Build the PROFESSIONAL TRADING RULES ENGINE prompt for Gemini AI
+ * 
+ * Bertindak seperti DESK ANALISIS INSTITUSIONAL.
+ * Bukan trader emosional, bukan spekulan, dan bukan penasihat keuangan.
  */
 function buildAnalysisPrompt(data: AIAnalysisRequest): string {
-  const lastCandles = data.candles.slice(-20);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _currentCandle = lastCandles[lastCandles.length - 1];
+  const lastCandles = data.candles.slice(-50);
+  const currentCandle = lastCandles[lastCandles.length - 1];
   
-  // Format candle data
-  const candleText = lastCandles.map((c, i) => 
+  // Calculate basic indicators for context
+  const closes = data.candles.map(c => c.close);
+  const ema200 = calculateSimpleEMA(closes, 200);
+  const ema21 = calculateSimpleEMA(closes, 21);
+  const ema9 = calculateSimpleEMA(closes, 9);
+  const atr = calculateSimpleATR(data.candles, 14);
+  
+  // Format candle data (last 30 for analysis)
+  const candleText = lastCandles.slice(-30).map((c, i) => 
     `[${i + 1}] O:${c.open.toFixed(2)} H:${c.high.toFixed(2)} L:${c.low.toFixed(2)} C:${c.close.toFixed(2)} V:${c.volume?.toFixed(0) || 'N/A'}`
   ).join('\n');
 
@@ -101,26 +110,43 @@ function buildAnalysisPrompt(data: AIAnalysisRequest): string {
 Swing Points: ${data.structure.swings.map(s => `${s.type}@${s.price.toFixed(2)}`).join(', ')}
 Breaks: ${data.structure.breaks.map(b => `${b.type} ${b.direction}@${b.price.toFixed(2)}`).join(', ')}
 Current Trend: ${data.structure.trend}
-` : 'No structure data';
+` : 'No structure data provided';
 
   // Format zones
   const zonesText = data.zones && data.zones.length > 0 ? data.zones.map(z => 
     `${z.type.toUpperCase()}: ${z.bottom.toFixed(2)}-${z.top.toFixed(2)} (${z.status}, strength:${z.strength})`
   ).join('\n') : 'No zones detected';
 
-  // Format patterns
-  const patternsText = data.patterns && data.patterns.length > 0 ? data.patterns.map(p =>
-    `${p.name} (${p.type}, ${p.reliability})`
-  ).join(', ') : 'No patterns detected';
+  // Determine mode based on symbol
+  const isGold = data.symbol === 'XAUUSD';
+  const symbolRules = isGold ? `
+=== RULES KHUSUS XAUUSD (GOLD) ===
+- Gold jarang confidence > 0.75
+- RR disarankan ≥ 1:2.5
+- Perhatikan level psikologis (kelipatan 10/50/100)
+- False breakout sering → wajib rejection candle
+- SL tidak boleh terlalu sempit
+- Ragu sedikit saja → WAIT
+` : '';
 
-  return `You are an expert trading analyst AI. Analyze the following market data and provide a trading signal.
+  return `Kamu adalah PROFESSIONAL TRADING RULES ENGINE.
+Bertindak seperti DESK ANALISIS INSTITUSIONAL.
+Output hanya: BUY | SELL | WAIT. WAIT adalah keputusan profesional.
 
-=== MARKET DATA ===
+=== INPUT DATA ===
 Symbol: ${data.symbol}
 Timeframe: ${data.timeframe}
 Current Price: ${data.currentPrice.toFixed(2)}
+Total Candles: ${data.candles.length}
 
-=== LAST 20 CANDLES (OHLCV) ===
+=== INDICATORS ===
+EMA9: ${ema9.toFixed(2)}
+EMA21: ${ema21.toFixed(2)}
+EMA200: ${ema200.toFixed(2)}
+ATR(14): ${atr.toFixed(2)}
+Price vs EMA200: ${currentCandle.close > ema200 ? 'ABOVE' : 'BELOW'}
+
+=== LAST 30 CANDLES (OHLCV) ===
 ${candleText}
 
 === MARKET STRUCTURE ===
@@ -128,23 +154,46 @@ ${structureText}
 
 === SUPPLY & DEMAND ZONES ===
 ${zonesText}
+${symbolRules}
+==================================================
+RULES GATE (WAJIB BERURUTAN)
+==================================================
 
-=== DETECTED PATTERNS ===
-${patternsText}
+GATE 1 — DATA RELIABILITY
+- WAJIB WAIT jika: totalCandles < 200 atau data tidak konsisten
 
-=== ANALYSIS RULES ===
-1. Only use the provided data - DO NOT make up prices
-2. Signal must be based on CLOSED candles only
-3. Entry must be near current price (within 0.5% for crypto, 0.2% for forex/gold)
-4. Stop loss must be at logical structure levels
-5. Take profit must have minimum 1:1.5 RRR
-6. If no clear setup, return WAIT signal
-7. Validity score: 0-100 based on confluence factors
+GATE 2 — TREND DETERMINATION (Gunakan EMA200 + struktur)
+- Bullish: Harga dominan di atas EMA200 + struktur HH & HL
+- Bearish: Harga dominan di bawah EMA200 + struktur LH & LL
+- Sideways: Cross EMA200 / range sempit
+- HARD RULE: Bullish → DILARANG SELL, Bearish → DILARANG BUY
 
-=== REQUIRED OUTPUT FORMAT (JSON ONLY) ===
+GATE 3 — VOLATILITY (ATR)
+- ATR terlalu kecil → market lesu → WAIT
+- ATR terlalu besar → market liar → WAIT
+
+GATE 4 — SUPPORT & RESISTANCE
+- Tentukan S1, S2, R1, R2 dari swing points
+- mid_range → WAIT
+
+GATE 5 — SETUP (TREND + PULLBACK)
+- BUY valid: Trend bullish + Pullback ke support/EMA21 + Rejection bullish
+- SELL valid: Trend bearish + Pullback ke resistance/EMA21 + Rejection bearish
+- Tidak lengkap → WAIT
+
+GATE 6 — RISK : REWARD
+- WAJIB RR ≥ 1:2 (Gold/LIVE mode: ≥ 1:2.5)
+- RR < 2 → WAIT
+
+GATE 7 — SENTIMENT (MODIFIER ONLY)
+- Sentiment tidak boleh override struktur
+
+==================================================
+REQUIRED OUTPUT FORMAT (JSON ONLY)
+==================================================
 {
   "signal": "BUY" | "SELL" | "WAIT",
-  "validity_score": <number 0-100>,
+  "validity_score": <number 0-100, gold max 75>,
   "trend": "Bullish" | "Bearish" | "Neutral",
   "entry": <number - exact price>,
   "stop_loss": <number - exact price>,
@@ -152,25 +201,77 @@ ${patternsText}
   "take_profit_2": <number - exact price>,
   "rrr": "<string like '1:2.5'>",
   "reason": [
-    "<string - reason 1>",
+    "<string - reason 1 based on gates>",
     "<string - reason 2>",
     "<string - reason 3>"
   ],
-  "risk_warning": "<string - risk warning message>",
+  "risk_warning": "Analisis probabilitas. Stop loss wajib. Risiko maksimal 1% per trade.",
   "structure_valid": <boolean>,
   "zone_quality": "Weak" | "Moderate" | "Strong" | "Extreme",
   "pattern_reliability": "HIGH" | "MEDIUM" | "LOW",
+  "gates_passed": {
+    "data": <boolean>,
+    "trend": <boolean>,
+    "volatility": <boolean>,
+    "setup": <boolean>,
+    "riskRR": <boolean>
+  },
   "analysis": {
-    "trend": "<detailed trend analysis>",
-    "support_resistance": "<S/R levels analysis>",
-    "pattern": "<pattern analysis>",
-    "momentum": "<momentum/RSI analysis>",
+    "trend": "<EMA200 position + swing structure>",
+    "support_resistance": "<S1, S2, R1, R2 levels>",
+    "pattern": "<rejection candle analysis>",
+    "momentum": "<price action momentum>",
     "volume": "<volume analysis>",
-    "confluence": "<confluence score explanation>"
+    "confluence": "<total gates passed, confluence score>"
   }
 }
 
-RESPOND WITH VALID JSON ONLY. NO MARKDOWN, NO EXPLANATION BEFORE OR AFTER.`;
+RULES KETAT:
+1. Jika salah satu gate FAIL → signal = "WAIT", validity_score = 0
+2. Jangan menambah field baru
+3. Jangan mengubah struktur output
+4. RESPOND WITH VALID JSON ONLY. NO MARKDOWN, NO EXPLANATION.`;
+}
+
+/**
+ * Simple EMA calculation for prompt context
+ */
+function calculateSimpleEMA(data: number[], period: number): number {
+  if (data.length < period) return data[data.length - 1] || 0;
+  
+  const multiplier = 2 / (period + 1);
+  let ema = data.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  
+  for (let i = period; i < data.length; i++) {
+    ema = (data[i] - ema) * multiplier + ema;
+  }
+  
+  return ema;
+}
+
+/**
+ * Simple ATR calculation for prompt context
+ */
+function calculateSimpleATR(candles: CandleData[], period: number = 14): number {
+  if (candles.length < period + 1) return 0;
+  
+  const trueRanges: number[] = [];
+  
+  for (let i = 1; i < candles.length; i++) {
+    const high = candles[i].high;
+    const low = candles[i].low;
+    const prevClose = candles[i - 1].close;
+    
+    const tr = Math.max(
+      high - low,
+      Math.abs(high - prevClose),
+      Math.abs(low - prevClose)
+    );
+    trueRanges.push(tr);
+  }
+  
+  const recentTR = trueRanges.slice(-period);
+  return recentTR.reduce((a, b) => a + b, 0) / recentTR.length;
 }
 
 /**

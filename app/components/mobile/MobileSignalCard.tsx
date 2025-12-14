@@ -32,9 +32,6 @@ export default function MobileSignalCard({ signal, symbol, onExpand }: MobileSig
 
   const typeColor = signal.type === 'BUY' ? 'bg-green-600' : 
                     signal.type === 'SELL' ? 'bg-red-600' : 'bg-gray-600';
-  
-  const typeTextColor = signal.type === 'BUY' ? 'text-green-400' : 
-                        signal.type === 'SELL' ? 'text-red-400' : 'text-gray-400';
 
   return (
     <div className="space-y-4">

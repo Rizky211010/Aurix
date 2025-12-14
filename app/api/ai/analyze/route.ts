@@ -64,22 +64,23 @@ export async function POST(request: NextRequest) {
       patterns: patterns || undefined,
     };
 
-    console.log(`[AI Analysis] Analyzing ${symbol} on ${timeframe}...`);
+    console.log(`[AI Analysis] Analyzing ${symbol} on ${timeframe} with Professional Trading Rules Engine...`);
     
-    // Call Gemini AI
+    // Call Gemini AI with Professional Trading Rules Engine prompt
     const aiResponse: AIAnalysisResponse = await analyzeWithGemini(analysisRequest);
     
-    console.log(`[AI Analysis] Signal: ${aiResponse.signal}, Score: ${aiResponse.validity_score}%`);
+    console.log(`[AI Analysis] Signal: ${aiResponse.signal}, Score: ${aiResponse.validity_score}%, Engine: Rules-Based`);
 
     return NextResponse.json({
       success: true,
       data: aiResponse,
       timestamp: Date.now(),
-      source: 'gemini-ai',
+      source: 'gemini-ai-rules-engine',
+      engine: 'Professional Trading Rules Engine v1.0',
     }, {
       headers: {
         'Cache-Control': 'no-store',
-        'X-AI-Engine': 'gemini-1.5-flash',
+        'X-AI-Engine': 'gemini-rules-engine',
       },
     });
 
@@ -101,14 +102,27 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     status: 'ok',
-    engine: 'gemini-1.5-flash',
+    engine: 'Professional Trading Rules Engine',
+    aiModel: 'gemini-2.0-flash-exp',
     version: '1.0.0',
+    rules: [
+      'GATE 1: Data Reliability',
+      'GATE 2: Trend Determination (EMA200 + Structure)',
+      'GATE 3: Volatility (ATR)',
+      'GATE 4: Support & Resistance',
+      'GATE 5: Setup Validation (Trend + Pullback)',
+      'GATE 6: Risk:Reward (min 1:2)',
+      'GATE 7: Sentiment Modifier',
+    ],
     capabilities: [
       'signal_generation',
       'trend_analysis',
       'structure_validation',
       'zone_analysis',
-      'pattern_confirmation',
+      'gates_validation',
+      'risk_reward_check',
+      'gold_special_rules',
+      'live_mode_lock',
     ],
   });
 }

@@ -6,7 +6,7 @@ import { SmartSignalCard, useSmartSignal } from './components/signal';
 import { PositionSizeCalculator } from './components/calculator';
 import { BotStatusPanel } from './components/botStatus';
 import { TradingLayout, Header, MarketInfoBar, Sidebar, SidebarSection, BottomPanel } from './components/layout';
-import { CandlestickData } from './components/chart/types';
+import { CandlestickData, Timeframe } from './components/chart/types';
 
 /**
  * AUTO TRADING EXECUTION PLATFORM
@@ -27,7 +27,7 @@ export default function TradingDashboard() {
   // State
   const [candles, setCandles] = useState<CandlestickData[]>([]);
   const [symbol, setSymbol] = useState('BTCUSDT');
-  const [timeframe, setTimeframe] = useState('1m');
+  const [timeframe, setTimeframe] = useState<Timeframe>('1m');
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [previousPrice, setPreviousPrice] = useState<number | null>(null);
   const [priceChange, setPriceChange] = useState<number | null>(null);
@@ -112,7 +112,7 @@ export default function TradingDashboard() {
       takeProfit1: signal.tp1,
       takeProfit2: signal.tp2,
       confidence: signal.validity_score,
-      reason: signal.reasons?.join('. ') || 'Signal generated based on technical analysis',
+      reason: signal.reason || 'Signal generated based on technical analysis',
       riskReward: signal.risk_reward_ratio || 2,
     };
   }, [signal]);
@@ -200,7 +200,7 @@ export default function TradingDashboard() {
       price={currentPrice || 0}
       priceDirection={priceDirection}
       timeframe={timeframe}
-      onTimeframeChange={setTimeframe}
+      onTimeframeChange={(tf) => setTimeframe(tf as Timeframe)}
       onSymbolChange={setSymbol}
       botStatus={botRunning ? 'running' : 'stopped'}
       botMode={botMode}
