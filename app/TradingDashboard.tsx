@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { FullFeaturedChart } from './components/chart/FullFeaturedChart';
 import { SmartSignalCard, useSmartSignal } from './components/signal';
 import { PositionSizeCalculator } from './components/calculator';
@@ -26,8 +26,10 @@ import { CandlestickData } from './components/chart/types';
 export default function TradingDashboard() {
   // State
   const [candles, setCandles] = useState<CandlestickData[]>([]);
-  const [symbol, setSymbol] = useState('XAUUSD');
+  const [symbol, setSymbol] = useState('BTCUSDT');
+  const [timeframe, setTimeframe] = useState('1m');
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  const [previousPrice, setPreviousPrice] = useState<number | null>(null);
   const [priceChange, setPriceChange] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('chart');
   const [high24h, setHigh24h] = useState<number | undefined>();
@@ -37,6 +39,15 @@ export default function TradingDashboard() {
   // Bot State
   const [botRunning, setBotRunning] = useState(false);
   const [botMode, setBotMode] = useState<'live' | 'dry-run'>('dry-run');
+  const [aiEnabled, setAiEnabled] = useState(true);
+
+  // Calculate price direction for mobile
+  const priceDirection = useMemo((): 'up' | 'down' | 'neutral' => {
+    if (!currentPrice || !previousPrice) return 'neutral';
+    if (currentPrice > previousPrice) return 'up';
+    if (currentPrice < previousPrice) return 'down';
+    return 'neutral';
+  }, [currentPrice, previousPrice]);
 
   // Callback to receive historical data from ChartComponent
   const handleHistoricalData = useCallback((data: CandlestickData[]) => {
@@ -60,6 +71,7 @@ export default function TradingDashboard() {
 
   // Callback to receive real-time updates
   const handleRealtimeUpdate = useCallback((candle: CandlestickData) => {
+    setPreviousPrice(currentPrice);
     setCurrentPrice(candle.close);
     setCandles(prev => {
       if (prev.length === 0) return prev;
@@ -72,7 +84,7 @@ export default function TradingDashboard() {
       }
       return prev;
     });
-  }, []);
+  }, [currentPrice]);
 
   // Smart Signal Hook - Simplified for auto trading (no patterns/zones/structure needed for UI)
   const { 
@@ -81,16 +93,41 @@ export default function TradingDashboard() {
     isLoading: signalLoading, 
     source: signalSource, 
     refresh: refreshSignal,
-    aiEnabled,
-    setAiEnabled,
     autoRefreshEnabled,
     setAutoRefreshEnabled,
   } = useSmartSignal({
     symbol,
     candles,
-    timeframe: '1h',
+    timeframe,
     enabled: candles.length > 20,
   });
+
+  // Mobile signal format
+  const mobileSignal = useMemo(() => {
+    if (!signal) return null;
+    return {
+      type: signal.type as 'BUY' | 'SELL' | 'HOLD',
+      entry: (signal.entry_zone.high + signal.entry_zone.low) / 2,
+      stopLoss: signal.sl,
+      takeProfit1: signal.tp1,
+      takeProfit2: signal.tp2,
+      confidence: signal.validity_score,
+      reason: signal.reasons?.join('. ') || 'Signal generated based on technical analysis',
+      riskReward: signal.risk_reward_ratio || 2,
+    };
+  }, [signal]);
+
+  // Mobile sentiment data
+  const sentimentData = useMemo(() => ({
+    sentiment: (signal?.type === 'BUY' ? 'BULLISH' : signal?.type === 'SELL' ? 'BEARISH' : 'NEUTRAL') as 'BULLISH' | 'BEARISH' | 'NEUTRAL',
+    confidence: signal?.validity_score || 50,
+    fearGreed: 50,
+    volume: 'INCREASING' as const,
+    whales: 'BUYING' as const,
+    shortTerm: 'UP' as const,
+    midTerm: 'DOWN' as const,
+    longTerm: 'UP' as const,
+  }), [signal]);
 
   // Bot Controls
   const handleStartBot = useCallback(async () => {
@@ -158,6 +195,23 @@ export default function TradingDashboard() {
 
   return (
     <TradingLayout
+      // Mobile props
+      symbol={symbol}
+      price={currentPrice || 0}
+      priceDirection={priceDirection}
+      timeframe={timeframe}
+      onTimeframeChange={setTimeframe}
+      onSymbolChange={setSymbol}
+      botStatus={botRunning ? 'running' : 'stopped'}
+      botMode={botMode}
+      onBotStart={handleStartBot}
+      onBotStop={handleStopBot}
+      onBotModeChange={(mode) => setBotMode(mode)}
+      aiEnabled={aiEnabled}
+      onAiToggle={setAiEnabled}
+      signal={mobileSignal}
+      sentimentData={sentimentData}
+      // Desktop props
       header={
         <Header
           symbol={symbol}
@@ -280,7 +334,7 @@ export default function TradingDashboard() {
       <div className="h-full p-2">
         <FullFeaturedChart
           symbol={symbol}
-          initialTimeframe="1h"
+          initialTimeframe={timeframe}
           height={450}
           showMarketStructure={false}  // ❌ Disabled - not needed for auto trading
           showSupplyDemand={false}     // ❌ Disabled - bot needs exact numbers
@@ -289,6 +343,7 @@ export default function TradingDashboard() {
           signal={signal}
           onHistoricalData={handleHistoricalData}
           onRealtimeUpdate={handleRealtimeUpdate}
+          onTimeframeChange={setTimeframe}
         />
       </div>
     </TradingLayout>

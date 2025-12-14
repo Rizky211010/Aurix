@@ -181,3 +181,194 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
+
+/* Touch action for better mobile experience */
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
+.touch-pan-x {
+  touch-action: pan-x;
+}
+
+.touch-none {
+  touch-action: none;
+}
+
+/* Safe area padding for notch devices (iPhone X+, etc) */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left, 0);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+/* Mobile tap highlight removal */
+@media (max-width: 768px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  button, a {
+    touch-action: manipulation;
+  }
+}
+
+/* Mobile text sizing */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* Prevent pull-to-refresh on mobile */
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* Bottom sheet animations */
+@keyframes slideUpSheet {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDownSheet {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.animate-sheet-up {
+  animation: slideUpSheet 0.3s ease-out forwards;
+}
+
+.animate-sheet-down {
+  animation: slideDownSheet 0.3s ease-in forwards;
+}
+
+/* Mobile card styles */
+.mobile-card {
+  background: #21262D;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* Active state for mobile buttons */
+@media (hover: none) {
+  .mobile-active:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+/* Price flash animation */
+@keyframes priceFlashUp {
+  0% {
+    background-color: rgba(34, 197, 94, 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes priceFlashDown {
+  0% {
+    background-color: rgba(239, 68, 68, 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.price-flash-up {
+  animation: priceFlashUp 0.3s ease-out;
+}
+
+.price-flash-down {
+  animation: priceFlashDown 0.3s ease-out;
+}
+
+/* Mobile responsive grid */
+@media (max-width: 640px) {
+  .mobile-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+/* Hide on mobile */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Show only on mobile */
+@media (min-width: 769px) {
+  .show-mobile-only {
+    display: none !important;
+  }
+}
+
+/* Mobile header z-index fix */
+.mobile-header {
+  z-index: 100;
+}
+
+/* Mobile bottom nav z-index */
+.mobile-nav {
+  z-index: 100;
+}
+
+/* Bottom sheet z-index */
+.bottom-sheet {
+  z-index: 90;
+}
+
+.bottom-sheet-backdrop {
+  z-index: 80;
+}
+
+/* Improve touch scroll performance */
+.scroll-smooth-touch {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Loading skeleton for mobile */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #21262D 25%, #30363D 50%, #21262D 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}

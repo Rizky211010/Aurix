@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { CandlestickData, CHART_COLORS, Timeframe } from './components/chart/types';
 import { useWebSocket } from './components/chart/hooks/useWebSocket';
 import { useTradingSignal } from './components/signal/useTradingSignal';
 import { MarketSentimentPanel } from './components/analysis/MarketSentimentPanel';
 import { useZoomPan } from './components/chart/hooks/useZoomPan';
+import { MobileLayout } from './components/mobile';
 
 /**
  * AI MARKET VISUALIZATION & TRADING DECISION ENGINE
@@ -54,6 +55,27 @@ export default function TradingDashboard() {
   
   // Activity logs
   const [logs, setLogs] = useState<Array<{time: string; type: string; message: string}>>([]);
+  
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Check for mobile screen on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Price direction for mobile
+  const priceDirection = useMemo((): 'up' | 'down' | 'neutral' => {
+    if (priceChange > 0) return 'up';
+    if (priceChange < 0) return 'down';
+    return 'neutral';
+  }, [priceChange]);
 
   /**
    * HANDLE HISTORICAL DATA
@@ -171,6 +193,33 @@ export default function TradingDashboard() {
     autoRefresh: botRunning,
     refreshInterval: botRunning ? 10000 : 30000, // Faster when bot running
   });
+
+  // Mobile signal format
+  const mobileSignal = useMemo(() => {
+    if (!signal || signal.signal === 'WAIT') return null;
+    return {
+      type: signal.signal as 'BUY' | 'SELL' | 'HOLD',
+      entry: signal.entry || 0,
+      stopLoss: signal.stop_loss || 0,
+      takeProfit1: signal.take_profit_1 || 0,
+      takeProfit2: signal.take_profit_2 || undefined,
+      confidence: signal.confidence || 0,
+      reason: signal.reason || 'Signal generated based on technical analysis',
+      riskReward: signal.risk_reward || 2,
+    };
+  }, [signal]);
+
+  // Mobile sentiment data
+  const sentimentData = useMemo(() => ({
+    sentiment: (signal?.signal === 'BUY' ? 'BULLISH' : signal?.signal === 'SELL' ? 'BEARISH' : 'NEUTRAL') as 'BULLISH' | 'BEARISH' | 'NEUTRAL',
+    confidence: signal?.confidence || 50,
+    fearGreed: 50,
+    volume: 'INCREASING' as const,
+    whales: 'BUYING' as const,
+    shortTerm: 'UP' as const,
+    midTerm: 'DOWN' as const,
+    longTerm: 'UP' as const,
+  }), [signal]);
 
   // Format price utility - defined early for use in effects
   const formatPrice = useCallback((price: number | null) => {
@@ -525,6 +574,69 @@ export default function TradingDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signal?.signal, signal?.entry, addLog]);
 
+  // ========================================
+  // MOBILE VIEW
+  // ========================================
+  if (isMobile) {
+    return (
+      <MobileLayout
+        symbol={symbol}
+        price={currentPrice || 0}
+        priceDirection={priceDirection}
+        timeframe={timeframe}
+        onTimeframeChange={(tf) => setTimeframe(tf as Timeframe)}
+        onSymbolChange={setSymbol}
+        botStatus={botRunning ? 'running' : 'stopped'}
+        botMode={botMode}
+        onBotStart={() => {
+          setBotRunning(true);
+          addLog('INFO', `Bot started in ${botMode.toUpperCase()} mode`);
+          fetchSignal();
+        }}
+        onBotStop={() => {
+          setBotRunning(false);
+          addLog('INFO', 'Bot stopped');
+        }}
+        onBotModeChange={(mode) => setBotMode(mode)}
+        aiEnabled={aiEnabled}
+        onAiToggle={setAiEnabled}
+        signal={mobileSignal}
+        sentimentData={sentimentData}
+      >
+        {/* Mobile Chart Container */}
+        <div className="h-full w-full relative">
+          <div ref={containerRef} className="absolute inset-0" />
+          
+          {/* Zoom Controls */}
+          <div className="absolute top-2 right-2 flex gap-1 z-10">
+            <button
+              onClick={resetZoom}
+              className="px-2 py-1 bg-blue-600/80 rounded text-xs text-white"
+            >
+              ▶▶ Latest
+            </button>
+            <button
+              onClick={fitAll}
+              className="px-2 py-1 bg-gray-800/80 rounded text-xs text-gray-300"
+            >
+              ↔ Fit All
+            </button>
+          </div>
+          
+          {/* Connection Status */}
+          <div className="absolute bottom-2 left-2 z-10 bg-gray-900/80 rounded px-2 py-1 text-xs">
+            <span className={isConnected ? 'text-emerald-400' : 'text-red-400'}>
+              {isConnected ? '● LIVE' : '○ OFFLINE'}
+            </span>
+          </div>
+        </div>
+      </MobileLayout>
+    );
+  }
+
+  // ========================================
+  // DESKTOP VIEW
+  // ========================================
   return (
     <div className="h-screen flex flex-col bg-[#0D1117] text-gray-100">
       {/* Header */}

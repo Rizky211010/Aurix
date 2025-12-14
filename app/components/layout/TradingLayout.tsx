@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import { MobileLayout } from '../mobile';
 
 interface TradingLayoutProps {
   children: React.ReactNode;
@@ -8,6 +9,43 @@ interface TradingLayoutProps {
   marketInfo?: React.ReactNode;
   sidebar?: React.ReactNode;
   bottomPanel?: React.ReactNode;
+  // Mobile-specific props
+  symbol?: string;
+  price?: number;
+  priceDirection?: 'up' | 'down' | 'neutral';
+  timeframe?: string;
+  onTimeframeChange?: (tf: string) => void;
+  onSymbolChange?: (symbol: string) => void;
+  // Bot props
+  botStatus?: 'running' | 'stopped' | 'error';
+  botMode?: 'dry-run' | 'live';
+  onBotStart?: () => void;
+  onBotStop?: () => void;
+  onBotModeChange?: (mode: 'dry-run' | 'live') => void;
+  aiEnabled?: boolean;
+  onAiToggle?: (enabled: boolean) => void;
+  // Signal props
+  signal?: {
+    type: 'BUY' | 'SELL' | 'HOLD';
+    entry: number;
+    stopLoss: number;
+    takeProfit1: number;
+    takeProfit2?: number;
+    confidence: number;
+    reason: string;
+    riskReward: number;
+  } | null;
+  // Sentiment props
+  sentimentData?: {
+    sentiment: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+    confidence: number;
+    fearGreed: number;
+    volume: 'INCREASING' | 'DECREASING' | 'STABLE';
+    whales: 'BUYING' | 'SELLING' | 'NEUTRAL';
+    shortTerm: 'UP' | 'DOWN' | 'SIDEWAYS';
+    midTerm: 'UP' | 'DOWN' | 'SIDEWAYS';
+    longTerm: 'UP' | 'DOWN' | 'SIDEWAYS';
+  };
 }
 
 export function TradingLayout({
@@ -16,6 +54,22 @@ export function TradingLayout({
   marketInfo,
   sidebar,
   bottomPanel,
+  // Mobile props with defaults
+  symbol = 'BTCUSDT',
+  price = 0,
+  priceDirection = 'neutral',
+  timeframe = '1m',
+  onTimeframeChange = () => {},
+  onSymbolChange = () => {},
+  botStatus = 'stopped',
+  botMode = 'dry-run',
+  onBotStart = () => {},
+  onBotStop = () => {},
+  onBotModeChange = () => {},
+  aiEnabled = true,
+  onAiToggle = () => {},
+  signal = null,
+  sentimentData,
 }: TradingLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [bottomCollapsed, setBottomCollapsed] = useState(false);
@@ -28,8 +82,32 @@ export function TradingLayout({
     setBottomCollapsed(prev => !prev);
   }, []);
 
-  return (
-    <div className="h-screen flex flex-col bg-[#0a0a0f] text-gray-100 overflow-hidden">
+  // Mobile Layout for screens < 768px
+  const mobileView = (
+    <MobileLayout
+      symbol={symbol}
+      price={price}
+      priceDirection={priceDirection}
+      timeframe={timeframe}
+      onTimeframeChange={onTimeframeChange}
+      onSymbolChange={onSymbolChange}
+      botStatus={botStatus}
+      botMode={botMode}
+      onBotStart={onBotStart}
+      onBotStop={onBotStop}
+      onBotModeChange={onBotModeChange}
+      aiEnabled={aiEnabled}
+      onAiToggle={onAiToggle}
+      signal={signal}
+      sentimentData={sentimentData}
+    >
+      {children}
+    </MobileLayout>
+  );
+
+  // Desktop Layout for screens >= 768px
+  const desktopView = (
+    <div className="h-screen flex flex-col bg-[#0a0a0f] text-gray-100 overflow-hidden hidden md:flex">
       {/* Fixed Header */}
       {header && (
         <header className="flex-shrink-0 border-b border-gray-800 bg-[#0d0d14]">
@@ -116,5 +194,16 @@ export function TradingLayout({
         )}
       </div>
     </div>
+  );
+
+  return (
+    <>
+      {/* Mobile View - shows on small screens */}
+      <div className="md:hidden">
+        {mobileView}
+      </div>
+      {/* Desktop View - shows on medium+ screens */}
+      {desktopView}
+    </>
   );
 }

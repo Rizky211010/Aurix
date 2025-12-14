@@ -50,6 +50,7 @@ interface FullChartProps {
   };
   onHistoricalData?: (data: CandlestickData[]) => void;
   onRealtimeUpdate?: (candle: CandlestickData) => void;
+  onTimeframeChange?: (timeframe: Timeframe) => void;
 }
 
 // Zone drawing interface
@@ -144,6 +145,7 @@ export function FullFeaturedChart({
   structureConfig,
   onHistoricalData,
   onRealtimeUpdate,
+  onTimeframeChange,
 }: FullChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -164,6 +166,15 @@ export function FullFeaturedChart({
   
   // Panel visibility - using activePanel for single panel at a time
   const [activePanel, setActivePanel] = useState<'structure' | 'zones' | 'patterns' | null>('zones');
+
+  // Handle timeframe change with external callback
+  const handleTimeframeChange = useCallback((newTimeframe: Timeframe) => {
+    setTimeframe(newTimeframe);
+    setHistoricalData([]);
+    setCurrentPrice(undefined);
+    setPriceChange(undefined);
+    onTimeframeChange?.(newTimeframe);
+  }, [onTimeframeChange]);
 
   // Reset data when symbol changes
   useEffect(() => {
@@ -822,14 +833,6 @@ export function FullFeaturedChart({
     zoomSensitivity: 0.2,  // Moderate zoom speed
     enableAutoHideOnZoom: true,  // Hide details when zoomed out
   });
-
-  // Handle timeframe change
-  const handleTimeframeChange = useCallback((newTimeframe: Timeframe) => {
-    setTimeframe(newTimeframe);
-    setHistoricalData([]);
-    setCurrentPrice(undefined);
-    setPriceChange(undefined);
-  }, []);
 
   return (
     <div className="flex gap-4">
