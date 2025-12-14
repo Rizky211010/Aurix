@@ -56,8 +56,8 @@ const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
 
 export default function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
   return (
-    <nav className="flex-shrink-0 bg-[#161B22] border-t border-[#21262D] 
-                    flex items-center justify-around h-14 z-50 safe-area-bottom">
+    <nav className="bg-[#161B22] border-t border-[#21262D] 
+                    flex items-center justify-around h-14 pb-safe">
       {TABS.map((tab) => (
         <button
           key={tab.id}

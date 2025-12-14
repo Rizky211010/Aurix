@@ -216,6 +216,32 @@ body {
   padding-right: env(safe-area-inset-right, 0);
 }
 
+/* Additional safe area utilities */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Fixed positioning for mobile elements */
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+}
+
+.fixed-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+}
+
 /* Mobile tap highlight removal */
 @media (max-width: 768px) {
   * {

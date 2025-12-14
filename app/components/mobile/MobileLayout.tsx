@@ -139,19 +139,21 @@ export default function MobileLayout({
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#0D1117] md:hidden overflow-hidden">
-      {/* Fixed Header */}
-      <MobileHeader
-        symbol={symbol}
-        price={price}
-        priceDirection={priceDirection}
-        timeframe={timeframe}
-        onTimeframeChange={onTimeframeChange}
-        onSymbolChange={onSymbolChange}
-      />
+    <div className="fixed inset-0 flex flex-col bg-[#0D1117] md:hidden">
+      {/* Fixed Header - Always visible at top */}
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <MobileHeader
+          symbol={symbol}
+          price={price}
+          priceDirection={priceDirection}
+          timeframe={timeframe}
+          onTimeframeChange={onTimeframeChange}
+          onSymbolChange={onSymbolChange}
+        />
+      </div>
 
-      {/* Chart Area - Takes remaining space */}
-      <main className="flex-1 overflow-hidden relative">
+      {/* Chart Area - With padding for header and nav */}
+      <main className="flex-1 overflow-auto pt-[88px] pb-[56px]">
         {children}
       </main>
 
@@ -169,11 +171,13 @@ export default function MobileLayout({
         {getPanelContent()}
       </BottomSheet>
 
-      {/* Fixed Bottom Navigation */}
-      <MobileNav
-        activeTab={activePanel || 'chart'}
-        onTabChange={handleNavClick}
-      />
+      {/* Fixed Bottom Navigation - Always visible at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+        <MobileNav
+          activeTab={activePanel || 'chart'}
+          onTabChange={handleNavClick}
+        />
+      </div>
     </div>
   );
 }

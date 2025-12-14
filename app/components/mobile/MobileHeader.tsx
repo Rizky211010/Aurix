@@ -42,7 +42,7 @@ export default function MobileHeader({
       : 'text-white';
 
   return (
-    <header className="flex-shrink-0 bg-[#161B22] border-b border-[#21262D] px-3 py-2 z-50 relative">
+    <header className="bg-[#161B22] border-b border-[#21262D] px-3 py-2 safe-area-top">
       {/* Top Row: Symbol + Price */}
       <div className="flex items-center justify-between mb-2">
         {/* Symbol Selector */}
